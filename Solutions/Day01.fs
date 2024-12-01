@@ -7,32 +7,26 @@ open System.Linq
 
 type Data() =
     member x.Read() =
-        use stream = new StreamReader(@"../../../input.txt")
+        let lines = File.ReadLines(@"../../../input.txt")
 
         let leftList = PriorityQueue<int, int>()
         let rightList = PriorityQueue<int, int>()
 
-        let mutable valid = true
+        lines
+        |> Seq.iter (fun line ->
+            let split = line.Split([| ' ' |], StringSplitOptions.RemoveEmptyEntries)
 
-        while valid do
-            let line = stream.ReadLine()
-
-            if (line = null) then
-                valid <- false
-            else
-                let split = line.Split([| ' ' |], StringSplitOptions.RemoveEmptyEntries)
-
-                if split.Length = 2 then
-                    let l = Convert.ToInt32(split[0])
-                    let r = Convert.ToInt32(split[1])
-                    leftList.Enqueue(l, l)
-                    rightList.Enqueue(r, r)
+            if split.Length = 2 then
+                let l = Convert.ToInt32(split[0])
+                let r = Convert.ToInt32(split[1])
+                leftList.Enqueue(l, l)
+                rightList.Enqueue(r, r))
 
         leftList, rightList
 
 let getData () =
     let data = Data().Read()
-    data.Deconstruct()
+    data
 
 let part1 =
     let leftList, rightList = getData ()
@@ -58,25 +52,20 @@ let part2 =
     let leftItems = toList leftQueue
     let rightItems = toList rightQueue
 
-    let frequencyCounter source =
-        (Map.empty<int, int>, source)
+    // I'm sure there's a more functional way of writing this
+    let frequencyCounter list =
+        (Map.empty<int, int>, list)
         ||> Seq.fold (fun map item -> map.Add(item, map.GetValueOrDefault(item) + 1))
-
+    
     let leftFreq = frequencyCounter leftItems
     let rightFreq = frequencyCounter rightItems
 
-    let commonKeys = ((fun l -> rightFreq.ContainsKey(l)), leftFreq.Keys) ||> Seq.filter
+    let commonKeys = leftFreq.Keys |> Seq.filter rightFreq.ContainsKey
 
-    let calculateSimilarity =
-        fun key ->
-            if leftFreq.ContainsKey key && rightFreq.ContainsKey key then
-                Some(key * leftFreq[key] * rightFreq[key])
-            else
-                None
-                
-    Seq.choose
-        calculateSimilarity
-        commonKeys
-    |> Seq.sum
-
+    commonKeys |> Seq.sumBy (fun key ->
+        let leftCount = leftFreq[key]
+        let rightCount = rightFreq[key]
+        key * leftCount * rightCount
+    )
+    
 printfn $"%A{part2}"
