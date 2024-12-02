@@ -12,27 +12,29 @@ type Data() =
         |> Seq.map (_.Split([| ' ' |], StringSplitOptions.RemoveEmptyEntries))
         |> Seq.map (fun list -> list |> Seq.map Convert.ToInt32)
 
-// Report is safe if:
-// two adjacent levels differ by at least one and at most three
-//   i.e., 1 <= Abs(paiwise differences) <= 3
-// the levels are all increasing or all decreasing
-//  i.e, pairwise differences are strictly monotonic
-//   Math.Sign(pairwise difference) are all the same
-//  (diff = 0 => unsafe)
+/// Report is safe if:
+/// - Two adjacent levels differ by at least one and at most three (1 <= Abs(pairwise differences) <= 3)
+/// - The levels are all strictly increasing or all strictly decreasing (pairwise differences have the same sign)
 let isReportSafe (levels: int seq) =
-    let pairwiseDifferences = levels |> Seq.pairwise |> Seq.map (fun (a, b) -> a - b)
+    let pairwiseDifferences = levels |> Seq.pairwise |> Seq.map (fun (a, b) -> b - a)
 
     let isSafeTransition (difference: int) =
         let x = Math.Abs difference
         1 <= x && x <= 3
 
-    let increasing = pairwiseDifferences |> Seq.forall (fun x -> (Math.Sign x = 1))
-    let decreasing = pairwiseDifferences |> Seq.forall (fun x -> (Math.Sign x = -1))
+    let initialDirection =
+        match Seq.tryHead pairwiseDifferences with
+        | Some diff when diff > 0 -> 1
+        | Some diff when diff < 0 -> -1
+        | _ -> 0
 
-    let levelChangesWithinAllowedRange =
-        pairwiseDifferences |> Seq.forall isSafeTransition
+    let isMonotonicAndSafe =
+        initialDirection <> 0
+        && pairwiseDifferences
+           |> Seq.forall (fun diff ->
+               Math.Sign diff = initialDirection && isSafeTransition diff)
 
-    (increasing || decreasing) && levelChangesWithinAllowedRange
+    isMonotonicAndSafe
 
 let part1 =
     let reports = Data().Read()
@@ -44,15 +46,9 @@ let part2 =
     let reports = Data().Read()
 
     let isReportSafeWithDampener (report: int seq) =
-        // I tried to analyse without generating a bunch of sequences in memory
-        // but ultimately couldn't write a correct solution.
-        // Approach below is not very efficient but it gets the job done
-        //
-        // Generate reports with one omitted level
-        let derivedReports =
-            report |> Seq.indexed |> Seq.map (fun (idx, _) -> report |> Seq.removeAt idx)
+        let derivedReports = report |> Seq.mapi (fun idx _ -> report |> Seq.removeAt idx)
 
-        [| report |].Concat derivedReports |> Seq.map isReportSafe |> Seq.exists id
+        [| report |].Concat derivedReports |> Seq.exists isReportSafe
 
     reports |> Seq.filter isReportSafeWithDampener |> Seq.length
 
