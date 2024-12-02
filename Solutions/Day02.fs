@@ -9,9 +9,8 @@ type Data() =
         let filename = @"../../../day02_input.txt"
 
         File.ReadLines(filename)
-        |> Seq.map (fun line ->
-            line.Split([| ' ' |], StringSplitOptions.RemoveEmptyEntries)
-            |> Seq.map Convert.ToInt32)
+        |> Seq.map (_.Split([| ' ' |], StringSplitOptions.RemoveEmptyEntries))
+        |> Seq.map (fun list -> list |> Seq.map Convert.ToInt32)
 
 // Report is safe if:
 // two adjacent levels differ by at least one and at most three
@@ -20,7 +19,7 @@ type Data() =
 //  i.e, pairwise differences are strictly monotonic
 //   Math.Sign(pairwise difference) are all the same
 //  (diff = 0 => unsafe)
-let analyzeReport (levels: int seq) =
+let isReportSafe (levels: int seq) =
     let pairwiseDifferences = levels |> Seq.pairwise |> Seq.map (fun (a, b) -> a - b)
 
     let isSafeTransition (difference: int) =
@@ -37,26 +36,24 @@ let analyzeReport (levels: int seq) =
 
 let part1 =
     let reports = Data().Read()
-    reports |> Seq.map analyzeReport |> Seq.filter id |> Seq.length
+    reports |> Seq.filter isReportSafe |> Seq.length
 
 printfn $"%A{part1}"
 
 let part2 =
     let reports = Data().Read()
 
-    let analyzeReportWithDampening (report: int seq) =
+    let isReportSafeWithDampener (report: int seq) =
         // I tried to analyse without generating a bunch of sequences in memory
         // but ultimately couldn't write a correct solution.
         // Approach below is not very efficient but it gets the job done
-        // 
+        //
         // Generate reports with one omitted level
         let derivedReports =
             report |> Seq.indexed |> Seq.map (fun (idx, _) -> report |> Seq.removeAt idx)
 
-        [| report |].Concat derivedReports
-        |> Seq.map analyzeReport
-        |> Seq.exists id
+        [| report |].Concat derivedReports |> Seq.map isReportSafe |> Seq.exists id
 
-    reports |> Seq.map analyzeReportWithDampening |> Seq.filter id |> Seq.length
+    reports |> Seq.filter isReportSafeWithDampener |> Seq.length
 
 printfn $"%A{part2}"
