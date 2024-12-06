@@ -12,6 +12,8 @@
     <Compile Include="Solutions\Day03.fs" />
     <Compile Include="Solutions\Day04.fs" />
     <Compile Include="Solutions\Day05.fs" />
+    <Compile Include="Solutions\Day06.fs" />
+<!--    <Compile Include="Solutions\Day_Template.fs" />-->
   </ItemGroup>
 
 </Project>
