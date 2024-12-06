@@ -1,4 +1,4 @@
-module advent_of_code_2024.Solutions.Day05
+module Year2024Day05
 
 open System
 open System.Collections.Generic
@@ -57,7 +57,8 @@ let part2 =
 
     let sortBy rules nodes =
         let rec sortBy acc nodes =
-            if List.length nodes = 0 then acc
+            if List.length nodes = 0 then
+                acc
             else
                 let current = List.head nodes
                 let remaining = List.tail nodes

@@ -1,4 +1,4 @@
-module advent_of_code_2024.Solutions.Day04
+module Year2024Day04
 
 open System.IO
 
